@@ -17,20 +17,24 @@ Reusable local infrastructure based on:
 
 ```bash
 mkcert -install
-```
 
 mkcert pgadmin.localhost redis.localhost db.localhost traefik.localhost
 mv \*.pem core/certs/
 
 cp -r templates/service services/myapp
+```
 
-make routes
-make up
-make pull # pull images from registries
-make build # build local images (if Dockerfile exists)
-make rebuild # rebuild without cache
-make down # stop everything
-make ps # list containers
+## Common Commands
+
+| Command        | Description                                              |
+| -------------- | -------------------------------------------------------- |
+| `make pull`    | Pull all service images from their configured registries |
+| `make build`   | Build local images (only for services with a Dockerfile) |
+| `make rebuild` | Rebuild local images without using cache                 |
+| `make routes`  | Sync all service route definitions into Traefik          |
+| `make up`      | Start Traefik and all services                           |
+| `make down`    | Stop all running containers                              |
+| `make ps`      | List running containers                                  |
 
 ---
 
