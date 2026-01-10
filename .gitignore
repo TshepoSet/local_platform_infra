@@ -13,3 +13,7 @@ core/certs/*.pem
 
 # OS
 .DS_Store
+
+# Python virtual environment
+.venv/
+

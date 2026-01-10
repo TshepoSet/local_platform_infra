@@ -12,3 +12,9 @@ services:
       - ./routes:/etc/traefik/dynamic:ro
     command:
       - "--configFile=/traefik.yml"
+    networks:
+      - proxy
+    
+networks:
+  proxy:
+    external: true

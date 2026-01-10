@@ -4,3 +4,12 @@ tls:
       defaultCertificate:
         certFile: /certs/cert.pem
         keyFile: /certs/key.pem
+
+http:
+  routers:
+    traefik:
+      rule: Host(`traefik.localhost`)
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls: {}

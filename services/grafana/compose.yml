@@ -1,11 +1,11 @@
 services:
-  {{SERVICE_NAME}}:
-    image: {{IMAGE}}
+  grafana:
+    image: docker.io/grafana/grafana:latest
     restart: unless-stopped
     networks:
       proxy:
         aliases:
-          - {{SERVICE_NAME}}
+          - grafana
 
 networks:
   proxy:
