@@ -1,8 +1,30 @@
 # Traefik Dynamic Routes
 
-Drop-in routing files for services.
+This directory is watched by Traefik.
 
-Each service provides its own `route.yml`.
-Files are auto-loaded by Traefik via the file provider.
+Each service provides its own `route.yml` which is copied here
+using:
 
-Do not hardcode services here.
+```bash
+make routes
+```
+
+---
+
+# 📄 `services/.template/README.md`
+
+```md
+# Service Module Template
+
+Each service must provide:
+
+- compose.yml → container definition
+- route.yml → Traefik routing
+- .env → optional (not committed)
+
+Rules:
+
+- No Traefik labels
+- No TLS logic
+- No Docker socket usage
+```

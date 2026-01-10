@@ -18,3 +18,26 @@ Reusable local infrastructure based on:
 ```bash
 mkcert -install
 ```
+
+mkcert pgadmin.localhost redis.localhost db.localhost traefik.localhost
+mv \*.pem core/certs/
+
+cp -r templates/service services/myapp
+
+make routes
+make up
+make pull # pull images from registries
+make build # build local images (if Dockerfile exists)
+make rebuild # rebuild without cache
+make down # stop everything
+make ps # list containers
+
+---
+
+# 📄 `core/certs/.gitkeep`
+
+```text
+# Certificates live here (ignored by git)
+
+
+```
