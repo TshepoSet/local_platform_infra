@@ -1,5 +1,7 @@
 # Certificates (local only)
 infra/certs/*.pem
+core/certs/*.pem
+
 
 # Environment files
 .env
