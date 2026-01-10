@@ -1,0 +1,13 @@
+# Certificates (local only)
+infra/certs/*.pem
+
+# Environment files
+.env
+**/.env
+
+# Podman / Docker state
+**/data/
+**/volumes/
+
+# OS
+.DS_Store

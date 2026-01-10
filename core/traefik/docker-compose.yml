@@ -1,0 +1,14 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik.yml:/traefik.yml:ro
+      - ../certs:/certs:ro
+      - ./routes:/etc/traefik/dynamic:ro
+    command:
+      - "--configFile=/traefik.yml"
