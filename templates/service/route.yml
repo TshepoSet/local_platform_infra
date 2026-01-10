@@ -1,0 +1,13 @@
+http:
+  routers:
+    { { SERVICE_NAME } }:
+      rule: Host(`{{SERVICE_NAME}}.localhost`)
+      entryPoints: [websecure]
+      tls: {}
+      service: { { SERVICE_NAME } }
+
+  services:
+    { { SERVICE_NAME } }:
+      loadBalancer:
+        servers:
+          - url: http://{{SERVICE_NAME}}:{{PORT}}

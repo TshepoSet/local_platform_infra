@@ -1,0 +1,4 @@
+services:
+  { { SERVICE_NAME } }:
+    image: ${IMAGE}
+    restart: unless-stopped
