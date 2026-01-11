@@ -1,0 +1,12 @@
+services:
+  redis:
+    image: docker.io/redis/redisinsight
+    restart: unless-stopped
+    networks:
+      proxy:
+        aliases:
+          - redis
+
+networks:
+  proxy:
+    external: true

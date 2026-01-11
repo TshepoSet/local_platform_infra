@@ -1,0 +1,12 @@
+http:
+  routers:
+    redis:
+      rule: Host(`redis.localhost`)
+      entryPoints: [websecure]
+      tls: {}
+      service: redis
+  services:
+    redis:
+      loadBalancer:
+        servers:
+          - url: http://redis:5540

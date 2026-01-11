@@ -22,7 +22,16 @@ certs: ## Generate mkcert TLS certificates from service routes
 
 ## Sync service routes into Traefik
 routes: ## Sync all service route definitions into Traefik
-	cp services/*/route.yml core/traefik/routes/
+		@echo "🔁 Syncing Traefik routes..."
+	@mkdir -p core/traefik/routes
+# 	@rm -f core/traefik/routes/*.yml
+	@for svc in services/*; do \
+		name=$$(basename $$svc); \
+		if [ -f $$svc/route.yml ]; then \
+			cp $$svc/route.yml core/traefik/routes/$$name.yml; \
+			echo "  ✔ $$name"; \
+		fi \
+	done
 
 ## Start Traefik and all services
 up: certs routes ## Generate certs, sync routes, and start everything
@@ -86,14 +95,17 @@ destroy:
 	@read -p "Type 'destroy' to continue: " CONFIRM && [ "$$CONFIRM" = "destroy" ]
 
 	@echo "🛑 Stopping services..."
-	-@podman-compose -f core/traefik/docker-compose.yml down -v
+	@podman-compose -f core/traefik/docker-compose.yml down -v
 
-	@for svc in $(SERVICES); do \
-		echo "🛑 Stopping $$svc"; \
-		-@podman-compose -f services/$$svc/compose.yml down -v; \
+	@for svc in services/*; do \
+		name=$$(basename $$svc); \
+		if [ -f $$svc/compose.yml ]; then \
+			echo "🛑 Stopping $$name"; \
+			podman-compose -f $$svc/compose.yml down -v; \
+		fi \
 	done
 
 	@echo "🗑 Removing generated TLS certs..."
-	-@rm -f core/certs/*.pem
+	@rm -f core/certs/*.pem
 
 	@echo "✅ Infrastructure destroyed"

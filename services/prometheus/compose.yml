@@ -1,0 +1,12 @@
+services:
+  prometheus:
+    image: docker.io/prom/prometheus:latest
+    restart: unless-stopped
+    networks:
+      proxy:
+        aliases:
+          - prometheus
+
+networks:
+  proxy:
+    external: true
