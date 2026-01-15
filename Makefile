@@ -41,12 +41,44 @@ up: certs routes ## Generate certs, sync routes, and start everything
 	done
 	@$(MAKE) urls
 
+## Stop a service
+stop: ## Stop a specific service (name=)
+	@if [ -z "$(svc)" ]; then \
+		echo "❌ Usage: make stop svc=<service>"; \
+		exit 1; \
+	fi
+	@if [ ! -f services/$(svc)/compose.yml ]; then \
+		echo "❌ Service '$(svc)' does not exist"; \
+		exit 1; \
+	fi
+	@echo "🛑 Stopping service: $(svc)"
+	@podman-compose -f services/$(svc)/compose.yml down
+
 ## Stop all services
 down: ## Stop all running containers
 	podman-compose -f core/traefik/docker-compose.yml down
 	@for svc in $(SERVICES); do \
 		podman-compose -f services/$$svc/compose.yml down; \
 	done
+
+## Restart a service
+restart: ## Restart a specific service (name=)
+	@if [ -z "$(svc)" ]; then \
+		echo "❌ Usage: make restart svc=<service>"; \
+		exit 1; \
+	fi
+	@echo "🔁 Restarting service: $(svc)"
+	@podman-compose -f services/$(svc)/compose.yml down
+	@podman-compose -f services/$(svc)/compose.yml up -d
+
+## Start a service
+start: ## Start a specific service (name=)
+	@if [ -z "$(svc)" ]; then \
+		echo "❌ Usage: make start svc=<service>"; \
+		exit 1; \
+	fi
+	@echo "▶ Starting service: $(svc)"
+	@podman-compose -f services/$(svc)/compose.yml up -d
 
 ## Pull images from registries
 pull: ## Pull all service images from their registries

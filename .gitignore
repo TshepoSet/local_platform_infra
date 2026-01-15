@@ -1,19 +1,40 @@
-# Certificates (local only)
-infra/certs/*.pem
-core/certs/*.pem
-
-
-# Environment files
-.env
-**/.env
-
-# Podman / Docker state
-**/data/
-**/volumes/
-
-# OS
-.DS_Store
-
-# Python virtual environment
+# ========================
+# Python
+# ========================
 .venv/
+__pycache__/
+*.pyc
 
+# ========================
+# Environment files
+# ========================
+.env
+.env.*
+
+# ========================
+# Generated services (build artifacts)
+# ========================
+services/*
+
+# Keep templates
+!services/.gitkeep
+!services/.template/
+
+# ========================
+# Generated Traefik routes
+# ========================
+core/traefik/routes/*
+
+# Keep core/static routes
+!core/traefik/routes/core/
+
+# ========================
+# TLS / Certificates (local only)
+# ========================
+core/certs/*
+!core/certs/.gitkeep
+
+# ========================
+# Podman / Docker noise
+# ========================
+*.log
