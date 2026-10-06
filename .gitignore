@@ -38,3 +38,8 @@ core/certs/*
 # Podman / Docker noise
 # ========================
 *.log
+
+# Python package build metadata
+*.egg-info/
+build/
+dist/

@@ -1,6 +1,7 @@
 services:
   {{SERVICE_NAME}}:
-    image: {{IMAGE}}
+{{SOURCE}}
+    container_name: {{SERVICE_NAME}}
     restart: unless-stopped
     networks:
       proxy:

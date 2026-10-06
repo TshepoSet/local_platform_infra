@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Backward-compatible certificate command."""
+"""Compatibility entry point for existing service commands."""
 from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from lp.platform import Platform
+from lp.legacy import main
 
 if __name__ == "__main__":
-    Platform().prepare_files()
+    main()

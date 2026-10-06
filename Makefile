@@ -1,143 +1,70 @@
 PYTHON := .venv/bin/python
-
-SERVICES := $(shell ls services | grep -v "^\.template$$")
-TAG ?= latest
+PLATFORM = $(PYTHON) -m lp.legacy
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down pull build rebuild ps routes certs new-service
+.PHONY: help setup up down start stop restart logs remove status pull build rebuild ps routes certs new-service add urls destroy test
 
-## Show available commands
-help:
-	@echo ""
-	@echo "Local Platform Infrastructure"
-	@echo "----------------------------"
+help: ## Show available Make commands (lp help for the recommended CLI)
+	@echo "Local Platform Infrastructure — Make compatibility interface"
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
-	@echo ""
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
-## Generate TLS certificates automatically
-certs: ## Generate mkcert TLS certificates from service routes
-	$(PYTHON) tools/generate_certs.py
+setup: ## Check dependencies, ensure proxy network and prepare trusted HTTPS
+	$(PLATFORM) setup
 
-## Sync service routes into Traefik
-routes: ## Sync all service route definitions into Traefik
-		@echo "🔁 Syncing Traefik routes..."
-	@mkdir -p core/traefik/routes
-# 	@rm -f core/traefik/routes/*.yml
-	@for svc in services/*; do \
-		name=$$(basename $$svc); \
-		if [ -f $$svc/route.yml ]; then \
-			cp $$svc/route.yml core/traefik/routes/$$name.yml; \
-			echo "  ✔ $$name"; \
-		fi \
-	done
+up: ## Start everything, or one service (svc=), including prerequisites
+	$(PLATFORM) up --service "$(svc)"
 
-## Start Traefik and all services
-up: certs routes ## Generate certs, sync routes, and start everything
-	podman-compose -f core/traefik/docker-compose.yml up -d
-	@for svc in $(SERVICES); do \
-		podman-compose -f services/$$svc/compose.yml up -d; \
-	done
-	@$(MAKE) urls
+down: ## Stop everything, or one service (svc=); retain volumes
+	$(PLATFORM) down --service "$(svc)"
 
-## Stop a service
-stop: ## Stop a specific service (name=)
-	@if [ -z "$(svc)" ]; then \
-		echo "❌ Usage: make stop svc=<service>"; \
-		exit 1; \
-	fi
-	@if [ ! -f services/$(svc)/compose.yml ]; then \
-		echo "❌ Service '$(svc)' does not exist"; \
-		exit 1; \
-	fi
-	@echo "🛑 Stopping service: $(svc)"
-	@podman-compose -f services/$(svc)/compose.yml down
+start: ## Recreate/start one service with all prerequisites (svc=)
+	$(PLATFORM) start --service "$(svc)"
 
-## Stop all services
-down: ## Stop all running containers
-	podman-compose -f core/traefik/docker-compose.yml down
-	@for svc in $(SERVICES); do \
-		podman-compose -f services/$$svc/compose.yml down; \
-	done
+stop: ## Stop a specific service (svc=)
+	$(PLATFORM) stop --service "$(svc)"
 
-## Restart a service
-restart: ## Restart a specific service (name=)
-	@if [ -z "$(svc)" ]; then \
-		echo "❌ Usage: make restart svc=<service>"; \
-		exit 1; \
-	fi
-	@echo "🔁 Restarting service: $(svc)"
-	@podman-compose -f services/$(svc)/compose.yml down
-	@podman-compose -f services/$(svc)/compose.yml up -d
+restart: ## Recreate/restart a specific service (svc=)
+	$(PLATFORM) restart --service "$(svc)"
 
-## Start a service
-start: ## Start a specific service (name=)
-	@if [ -z "$(svc)" ]; then \
-		echo "❌ Usage: make start svc=<service>"; \
-		exit 1; \
-	fi
-	@echo "▶ Starting service: $(svc)"
-	@podman-compose -f services/$(svc)/compose.yml up -d
+logs: ## Follow a service's logs (svc=)
+	$(PLATFORM) logs --service "$(svc)"
 
-## Pull images from registries
-pull: ## Pull all service images from their registries
-	@for svc in $(SERVICES); do \
-		podman-compose -f services/$$svc/compose.yml pull || true; \
-	done
+remove: ## Unregister a service; preserve application source and volumes (svc=)
+	$(PLATFORM) remove --service "$(svc)"
 
-## Build local images
-build: ## Build local images (services with Dockerfile only)
-	@for svc in $(SERVICES); do \
-		if [ -f services/$$svc/Dockerfile ]; then \
-			podman-compose -f services/$$svc/compose.yml build; \
-		fi \
-	done
+status: ## Show platform services, URLs, network and HTTPS readiness
+	$(PLATFORM) status
 
-## Rebuild local images without cache
-rebuild: ## Rebuild local images without cache
-	@for svc in $(SERVICES); do \
-		if [ -f services/$$svc/Dockerfile ]; then \
-			podman-compose -f services/$$svc/compose.yml build --no-cache; \
-		fi \
-	done
+pull: ## Pull registry-only service images
+	$(PLATFORM) pull
 
-## List running containers
-ps: ## Show running containers
-	podman ps
+build: ## Build one service (svc=), or all build-based services
+	$(PLATFORM) build --service "$(svc)"
 
-## Create a new service from template
-new-service: ## Generate a new service (name= image= [port=])
-	$(PYTHON) tools/new_service.py $(name) --image $(image) $(if $(port),--port $(port))
+rebuild: ## Build without cache (svc= optional); legacy build-only behavior
+	$(PLATFORM) rebuild --service "$(svc)"
 
-## Print service URLs
-urls: ## Show service access URLs
-	@echo ""
-	@echo "Service URLs"
-	@echo "------------"
-	@for svc in $(SERVICES); do \
-		echo "  https://$$svc.localhost"; \
-	done
-	@echo "  https://traefik.localhost"
-	@echo ""
+ps: ## Show raw Podman container status (legacy)
+	$(PLATFORM) ps
 
-## Destroy all containers, volumes, and generated artifacts (DANGEROUS)
-destroy:
-	@echo "🔥 WARNING: This will REMOVE all containers, volumes, and certs."
-	@read -p "Type 'destroy' to continue: " CONFIRM && [ "$$CONFIRM" = "destroy" ]
+routes: ## Sync service file routes into Traefik
+	$(PLATFORM) routes
 
-	@echo "🛑 Stopping services..."
-	@podman-compose -f core/traefik/docker-compose.yml down -v
+certs: ## Generate/update mkcert certificates and refresh Traefik TLS files
+	$(PLATFORM) certs
 
-	@for svc in services/*; do \
-		name=$$(basename $$svc); \
-		if [ -f $$svc/compose.yml ]; then \
-			echo "🛑 Stopping $$name"; \
-			podman-compose -f $$svc/compose.yml down -v; \
-		fi \
-	done
+new-service: ## Generate service (name= image= OR context= port= [dockerfile=] [image=])
+	$(PYTHON) tools/new_service.py "$(name)" $(if $(image),--image "$(image)") $(if $(context),--context "$(context)",$(if $(path),--context "$(path)")) $(if $(dockerfile),--dockerfile "$(dockerfile)") $(if $(port),--port "$(port)")
 
-	@echo "🗑 Removing generated TLS certs..."
-	@rm -f core/certs/*.pem
+add: new-service ## Register a service (name=, path=/context= or image=, optional port=)
 
-	@echo "✅ Infrastructure destroyed"
+urls: ## Show registered service URLs
+	$(PLATFORM) urls --service "$(svc)"
+
+destroy: ## Destroy all containers, volumes and certificates (requires confirmation)
+	$(PLATFORM) destroy
+
+test: ## Run CLI, orchestration and Make regression tests
+	$(PYTHON) -m unittest discover -s tests -v
